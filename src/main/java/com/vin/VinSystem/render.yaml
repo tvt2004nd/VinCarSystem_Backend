@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: vinsystem-api
+    env: java
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -Dspring.profiles.active=prod -jar target/*.jar
+    plan: free
