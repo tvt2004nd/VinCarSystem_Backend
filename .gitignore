@@ -43,4 +43,4 @@ target/
 *.class
 *.jar
 .idea/
-*.iml
+*.imlsrc/main/resources/application.properties
