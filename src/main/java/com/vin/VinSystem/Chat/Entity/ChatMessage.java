@@ -60,6 +60,12 @@ public class ChatMessage {
     @Column(name = "edited", columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean edited = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    private MessageStatus status = MessageStatus.SENT;
+
+    public enum MessageStatus { SENT, DELIVERED, READ }
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -94,6 +100,9 @@ public class ChatMessage {
     public void setRecalled(Boolean v)        { this.recalled = v; }
     public boolean isEdited()                 { return Boolean.TRUE.equals(edited); }
     public void setEdited(Boolean v)          { this.edited = v; }
+
+    public MessageStatus getStatus()          { return status; }
+    public void setStatus(MessageStatus v)    { this.status = v; }
 
     public LocalDateTime getCreatedAt()       { return createdAt; }
     public void setCreatedAt(LocalDateTime v) { this.createdAt = v; }

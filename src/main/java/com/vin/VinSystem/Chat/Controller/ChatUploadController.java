@@ -4,13 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.vin.VinSystem.Common.ApiResponse;
 import com.vin.VinSystem.Config.CloudinaryService;
 
 @RestController
@@ -37,20 +37,16 @@ public class ChatUploadController {
     );
 
     @PostMapping("/chat")
-    public ResponseEntity<Map<String, Object>> upload(
+    public ApiResponse<Map<String, Object>> upload(
             @RequestParam MultipartFile file) throws Exception {
 
-        Map<String, Object> error = new HashMap<>();
-
         if (file.getSize() > MAX_SIZE) {
-            error.put("error", "File không được vượt quá 10MB");
-            return ResponseEntity.badRequest().body(error);
+            throw new IllegalArgumentException("File không được vượt quá 10MB");
         }
 
         String mime = file.getContentType();
         if (mime == null || !ALLOWED_MIME.contains(mime)) {
-            error.put("error", "Định dạng file không được hỗ trợ");
-            return ResponseEntity.badRequest().body(error);
+            throw new IllegalArgumentException("Định dạng file không được hỗ trợ");
         }
 
         // Xác định folder theo loại file
@@ -66,6 +62,6 @@ public class ChatUploadController {
         response.put("fileSize", file.getSize());
         response.put("fileMime", mime);
 
-        return ResponseEntity.ok(response);
+        return ApiResponse.success(response, "Upload thành công");
     }
 }

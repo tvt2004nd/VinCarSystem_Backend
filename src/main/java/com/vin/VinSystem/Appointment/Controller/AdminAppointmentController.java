@@ -8,6 +8,7 @@ import com.vin.VinSystem.Appointment.Repository.AppointmentRepository;
 import com.vin.VinSystem.Appointment.Service.AppointmentService;
 import com.vin.VinSystem.Auth.Entity.Staff;
 import com.vin.VinSystem.Auth.Repository.StaffRepository;
+import com.vin.VinSystem.Common.ApiResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 
@@ -19,7 +20,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "*")
 public class AdminAppointmentController {
 
     private final AppointmentRepository appointmentRepository;
@@ -43,12 +43,12 @@ public class AdminAppointmentController {
     */
 
     @GetMapping("/appointments")
-    public List<AppointmentResponseDTO> getAllAppointments() {
+    public ApiResponse<List<AppointmentResponseDTO>> getAllAppointments() {
 
-        return appointmentRepository.findAll()
+        return ApiResponse.success(appointmentRepository.findAll()
                 .stream()
                 .map(appointmentService::toDTO)  // dùng lại toDTO từ Service
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     /*
@@ -58,9 +58,9 @@ public class AdminAppointmentController {
     */
 
     @GetMapping("/staffs")
-    public List<StaffDTO> getStaffs() {
+    public ApiResponse<List<StaffDTO>> getStaffs() {
 
-        return staffRepository.findAll()
+        return ApiResponse.success(staffRepository.findAll()
                 .stream()
                 .map(staff -> {
 
@@ -77,7 +77,7 @@ public class AdminAppointmentController {
                     return dto;
 
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     /*
@@ -87,7 +87,7 @@ public class AdminAppointmentController {
     */
 
     @PutMapping("/appointments/{id}/assign")
-    public AppointmentResponseDTO assignStaff(
+    public ApiResponse<AppointmentResponseDTO> assignStaff(
             @PathVariable Long id,
             @RequestBody AssignStaffRequest request
     ) {
@@ -102,8 +102,9 @@ public class AdminAppointmentController {
         appointment.setStaff(staff);
         appointment.setStatus("CONFIRMED");
 
-        return appointmentService.toDTO(
-            appointmentRepository.save(appointment)
+        return ApiResponse.success(
+                appointmentService.toDTO(appointmentRepository.save(appointment)),
+                "Assign staff thành công"
         );
     }
 
@@ -114,7 +115,7 @@ public class AdminAppointmentController {
     */
 
     @PutMapping("/appointments/{id}/status")
-    public AppointmentResponseDTO updateStatus(
+    public ApiResponse<AppointmentResponseDTO> updateStatus(
             @PathVariable Long id,
             @RequestBody UpdateStatusRequest request
     ) {
@@ -124,8 +125,9 @@ public class AdminAppointmentController {
 
         appointment.setStatus(request.getStatus());
 
-        return appointmentService.toDTO(
-            appointmentRepository.save(appointment)
+        return ApiResponse.success(
+                appointmentService.toDTO(appointmentRepository.save(appointment)),
+                "Cập nhật trạng thái thành công"
         );
     }
 
@@ -136,7 +138,7 @@ public class AdminAppointmentController {
     */
 
     @DeleteMapping("/appointments/{id}")
-    public String cancelAppointment(@PathVariable Long id) {
+    public ApiResponse<Void> cancelAppointment(@PathVariable Long id) {
 
         Appointment appointment = appointmentRepository
                 .findById(id)
@@ -145,18 +147,18 @@ public class AdminAppointmentController {
         appointment.setStatus("CANCELLED");
         appointmentRepository.save(appointment);
 
-        return "Cancelled";
+        return ApiResponse.success(null, "Cancelled");
     }
     // Thêm vào AdminAppointmentController — lấy lịch hẹn theo staff + ngày
 @GetMapping("/appointments/staff/{staffId}")
-public List<AppointmentResponseDTO> getAppointmentsByStaff(
+public ApiResponse<List<AppointmentResponseDTO>> getAppointmentsByStaff(
         @PathVariable Long staffId
 ) {
-    return appointmentRepository
+    return ApiResponse.success(appointmentRepository
             .findByStaffUserId(staffId)
             .stream()
             .map(appointmentService::toDTO)
-            .collect(Collectors.toList());
+            .collect(Collectors.toList()));
 }
 /*
 ===============================
@@ -166,7 +168,7 @@ STAFF: UPDATE STATUS
 */
 @PutMapping("/appointments/{id}/staff-status")
 @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-public AppointmentResponseDTO staffUpdateStatus(
+public ApiResponse<AppointmentResponseDTO> staffUpdateStatus(
         @PathVariable Long id,
         @RequestBody UpdateStatusRequest request,
         Authentication authentication
@@ -183,8 +185,9 @@ public AppointmentResponseDTO staffUpdateStatus(
 
     appointment.setStatus(status);
 
-    return appointmentService.toDTO(
-        appointmentRepository.save(appointment)
+    return ApiResponse.success(
+            appointmentService.toDTO(appointmentRepository.save(appointment)),
+            "Cập nhật trạng thái thành công"
     );
 }
     /*

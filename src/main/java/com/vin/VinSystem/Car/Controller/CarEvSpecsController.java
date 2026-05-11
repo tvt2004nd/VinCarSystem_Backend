@@ -1,7 +1,5 @@
 package com.vin.VinSystem.Car.Controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +13,7 @@ import com.vin.VinSystem.Car.DTO.CarEvSpecsCreateDTO;
 import com.vin.VinSystem.Car.DTO.CarEvSpecsResponseDTO;
 import com.vin.VinSystem.Car.Service.CarEvSpecsService;
 import com.vin.VinSystem.Car.Controller.exception.ValidationException;
+import com.vin.VinSystem.Common.ApiResponse;
 
 import jakarta.validation.Valid;
 
@@ -33,16 +32,16 @@ public class CarEvSpecsController {
      * POST /api/cars/{carId}/ev-specs
      */
     @PostMapping
-    public ResponseEntity<CarEvSpecsResponseDTO> addOrUpdateCarEvSpecs(@PathVariable Long carId,
-                                                                        @Valid @RequestBody CarEvSpecsCreateDTO evSpecsDTO,
-                                                                        BindingResult bindingResult) {
+    public ApiResponse<CarEvSpecsResponseDTO> addOrUpdateCarEvSpecs(@PathVariable Long carId,
+                                                                    @Valid @RequestBody CarEvSpecsCreateDTO evSpecsDTO,
+                                                                    BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
             throw new ValidationException(errorMessage);
         }
 
         CarEvSpecsResponseDTO responseDTO = carEvSpecsService.addOrUpdateCarEvSpecs(carId, evSpecsDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+        return ApiResponse.success(responseDTO, "Cập nhật EV specs thành công");
     }
 
     /**
@@ -50,9 +49,9 @@ public class CarEvSpecsController {
      * GET /api/cars/{carId}/ev-specs
      */
     @GetMapping
-    public ResponseEntity<CarEvSpecsResponseDTO> getCarEvSpecs(@PathVariable Long carId) {
+    public ApiResponse<CarEvSpecsResponseDTO> getCarEvSpecs(@PathVariable Long carId) {
         CarEvSpecsResponseDTO responseDTO = carEvSpecsService.getCarEvSpecs(carId);
-        return ResponseEntity.ok(responseDTO);
+        return ApiResponse.success(responseDTO);
     }
 
     /**
@@ -60,9 +59,9 @@ public class CarEvSpecsController {
      * DELETE /api/cars/{carId}/ev-specs
      */
     @DeleteMapping
-    public ResponseEntity<Void> deleteCarEvSpecs(@PathVariable Long carId) {
+    public ApiResponse<Void> deleteCarEvSpecs(@PathVariable Long carId) {
         carEvSpecsService.deleteCarEvSpecs(carId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null, "Xóa EV specs thành công");
     }
 }
 

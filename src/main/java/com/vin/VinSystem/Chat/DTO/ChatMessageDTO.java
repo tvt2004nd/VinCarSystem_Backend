@@ -19,6 +19,7 @@ public class ChatMessageDTO {
     private String        fileMime;
     private boolean       recalled;
     private boolean       edited;
+    private String        status;
     private LocalDateTime time;
 
     public ChatMessageDTO() {}
@@ -31,6 +32,7 @@ public class ChatMessageDTO {
         this.senderName  = m.getSenderName();
         this.recalled    = m.isRecalled();
         this.edited      = m.isEdited();
+        this.status      = m.getStatus() != null ? m.getStatus().name() : "SENT";
         this.time        = m.getCreatedAt();
 
         if (m.isRecalled()) {
@@ -82,6 +84,8 @@ public class ChatMessageDTO {
     public void          setRecalled(boolean v)    { this.recalled = v; }
     public boolean       isEdited()                { return edited; }
     public void          setEdited(boolean v)      { this.edited = v; }
+    public String        getStatus()              { return status; }
+    public void          setStatus(String v)      { this.status = v; }
     public LocalDateTime getTime()                 { return time; }
     public void          setTime(LocalDateTime v)  { this.time = v; }
 }

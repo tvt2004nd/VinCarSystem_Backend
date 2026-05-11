@@ -2,8 +2,6 @@ package com.vin.VinSystem.Car.Controller;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +15,7 @@ import com.vin.VinSystem.Car.DTO.ModelCreateDTO;
 import com.vin.VinSystem.Car.DTO.ModelResponseDTO;
 import com.vin.VinSystem.Car.Service.ModelService;
 import com.vin.VinSystem.Car.Controller.exception.ValidationException;
+import com.vin.VinSystem.Common.ApiResponse;
 
 import jakarta.validation.Valid;
 
@@ -35,15 +34,15 @@ public class ModelController {
      * POST /api/models
      */
     @PostMapping
-    public ResponseEntity<ModelResponseDTO> createModel(@Valid @RequestBody ModelCreateDTO createDTO,
-                                                        BindingResult bindingResult) {
+    public ApiResponse<ModelResponseDTO> createModel(@Valid @RequestBody ModelCreateDTO createDTO,
+                                                     BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
             throw new ValidationException(errorMessage);
         }
 
         ModelResponseDTO responseDTO = modelService.createModel(createDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+        return ApiResponse.success(responseDTO, "Tạo model thành công");
     }
 
     /**
@@ -51,9 +50,9 @@ public class ModelController {
      * GET /api/models
      */
     @GetMapping
-    public ResponseEntity<List<ModelResponseDTO>> getAllModels() {
+    public ApiResponse<List<ModelResponseDTO>> getAllModels() {
         List<ModelResponseDTO> models = modelService.getAllModels();
-        return ResponseEntity.ok(models);
+        return ApiResponse.success(models);
     }
 
     /**
@@ -61,9 +60,9 @@ public class ModelController {
      * GET /api/models/{modelId}
      */
     @GetMapping("/{modelId}")
-    public ResponseEntity<ModelResponseDTO> getModelById(@PathVariable Long modelId) {
+    public ApiResponse<ModelResponseDTO> getModelById(@PathVariable Long modelId) {
         ModelResponseDTO responseDTO = modelService.getModelDetailById(modelId);
-        return ResponseEntity.ok(responseDTO);
+        return ApiResponse.success(responseDTO);
     }
 
     /**
@@ -71,9 +70,9 @@ public class ModelController {
      * DELETE /api/models/{modelId}
      */
     @DeleteMapping("/{modelId}")
-    public ResponseEntity<Void> deleteModel(@PathVariable Long modelId) {
+    public ApiResponse<Void> deleteModel(@PathVariable Long modelId) {
         modelService.deleteModel(modelId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null, "Xóa model thành công");
     }
 }
 

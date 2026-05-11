@@ -1,25 +1,25 @@
-    package com.vin.VinSystem.Deposit.Controller;
+package com.vin.VinSystem.Deposit.Controller;
 
-    import java.math.BigDecimal;
-    import java.security.Principal;
-    import java.util.HashMap;
-    import java.util.List;
-    import java.util.Map;
+import java.math.BigDecimal;
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-    import org.springframework.http.ResponseEntity;
-    import org.springframework.security.access.prepost.PreAuthorize;
-    import org.springframework.validation.annotation.Validated;
-    import org.springframework.web.bind.annotation.GetMapping;
-    import org.springframework.web.bind.annotation.PathVariable;
-    import org.springframework.web.bind.annotation.PostMapping;
-    import org.springframework.web.bind.annotation.PutMapping;
-    import org.springframework.web.bind.annotation.RequestBody;
-    import org.springframework.web.bind.annotation.RequestMapping;
-    import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-    import com.vin.VinSystem.Branch.Repository.BranchRepository;
-    import com.vin.VinSystem.Car.Entity.Car;
+import com.vin.VinSystem.Branch.Repository.BranchRepository;
+import com.vin.VinSystem.Car.Entity.Car;
 import com.vin.VinSystem.Car.Repository.CarRepository;
+import com.vin.VinSystem.Common.ApiResponse;
 import com.vin.VinSystem.Deposit.DTO.DepositAdminResponse;
 import com.vin.VinSystem.Deposit.DTO.DepositBranchResponse;
 import com.vin.VinSystem.Deposit.DTO.DepositResponse;
@@ -31,10 +31,10 @@ import com.vin.VinSystem.Deposit.Service.DepositService.CompletedResult;
 
 import jakarta.validation.Valid;
 
-    @RestController
-    @RequestMapping("/api/deposits")
-    @Validated
-    public class DepositController {
+@RestController
+@RequestMapping("/api/deposits")
+@Validated
+public class DepositController {
 
         private final DepositService depositService;
         private final CarRepository carRepository;
@@ -54,8 +54,8 @@ import jakarta.validation.Valid;
 
         @PostMapping("/online")
         @PreAuthorize("hasRole('CUSTOMER')")
-        public DepositResponse createOnlineDeposit(@Valid @RequestBody OnlineDepositRequest req,
-                                                Principal principal) {
+        public ApiResponse<DepositResponse> createOnlineDeposit(@Valid @RequestBody OnlineDepositRequest req,
+                                                               Principal principal) {
             Car car = carRepository.findById(req.getCarId())
                     .orElseThrow(() -> new RuntimeException("Car not found: " + req.getCarId()));
 
@@ -69,26 +69,26 @@ import jakarta.validation.Valid;
             deposit.setDepositAmount(req.getAmount());
 
             Deposit saved = depositService.createOnlineDeposit(deposit, principal.getName());
-            return new DepositResponse(saved);
+            return ApiResponse.success(new DepositResponse(saved), "Tạo đặt cọc thành công");
         }
 
         @GetMapping("/{id}")
         @PreAuthorize("hasAnyRole('CUSTOMER', 'STAFF', 'ADMIN')")
-        public DepositResponse getDepositById(@PathVariable Long id, Principal principal) {
-            return depositService.getDepositById(id, principal.getName());
+        public ApiResponse<DepositResponse> getDepositById(@PathVariable Long id, Principal principal) {
+            return ApiResponse.success(depositService.getDepositById(id, principal.getName()));
         }
 
         @PutMapping("/{id}/cancel")
         @PreAuthorize("hasRole('CUSTOMER')")
-        public DepositResponse cancelByCustomer(@PathVariable Long id, Principal principal) {
+        public ApiResponse<DepositResponse> cancelByCustomer(@PathVariable Long id, Principal principal) {
             Deposit saved = depositService.cancelByCustomer(id, principal.getName());
-            return new DepositResponse(saved);
+            return ApiResponse.success(new DepositResponse(saved), "Hủy đặt cọc thành công");
         }
 
         @GetMapping("/my")
         @PreAuthorize("hasRole('CUSTOMER')")
-        public List<DepositResponse> getMyDeposits(Principal principal) {
-            return depositService.getMyDeposits(principal.getName());
+        public ApiResponse<List<DepositResponse>> getMyDeposits(Principal principal) {
+            return ApiResponse.success(depositService.getMyDeposits(principal.getName()));
         }
 
         // ─────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ import jakarta.validation.Valid;
 
         @PostMapping("/offline")
         @PreAuthorize("hasRole('STAFF')")
-        public ResponseEntity<Map<String, Object>> createOfflineDeposit(
+        public ApiResponse<Map<String, Object>> createOfflineDeposit(
                 @Valid @RequestBody OfflineDepositRequest req,
                 Principal principal) {
 
@@ -117,40 +117,40 @@ import jakarta.validation.Valid;
             response.put("depositAmount", saved.getDepositAmount());
             response.put("depositType",   saved.getDepositType());
 
-            return ResponseEntity.ok(response);
+            return ApiResponse.success(response, "Tạo đặt cọc offline thành công");
         }
 
         @PutMapping("/{id}/cancel-staff")
         @PreAuthorize("hasRole('STAFF')")
-        public DepositResponse cancelByStaff(@PathVariable Long id, Principal principal) {
+        public ApiResponse<DepositResponse> cancelByStaff(@PathVariable Long id, Principal principal) {
             Deposit saved = depositService.cancelByStaff(id, principal.getName());
-            return new DepositResponse(saved);
+            return ApiResponse.success(new DepositResponse(saved), "Hủy đặt cọc thành công");
         }
 
         @GetMapping("/branch/{branchId}")
         @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-        public List<DepositBranchResponse> getDepositsByBranch(@PathVariable Long branchId) {
-            return depositService.getDepositsByBranch(branchId);
+        public ApiResponse<List<DepositBranchResponse>> getDepositsByBranch(@PathVariable Long branchId) {
+            return ApiResponse.success(depositService.getDepositsByBranch(branchId));
         }
 
         @PutMapping("/{id}/paid")
-        public DepositResponse markPaid(@PathVariable Long id) {
+        public ApiResponse<DepositResponse> markPaid(@PathVariable Long id) {
             Deposit saved = depositService.markPaid(id);
-            return new DepositResponse(saved);
+            return ApiResponse.success(new DepositResponse(saved), "Cập nhật trạng thái thành công");
         }
 
         @PutMapping("/{id}/failed")
-        public DepositResponse markFailed(@PathVariable Long id) {
+        public ApiResponse<DepositResponse> markFailed(@PathVariable Long id) {
             Deposit saved = depositService.markFailed(id);
-            return new DepositResponse(saved);
+            return ApiResponse.success(new DepositResponse(saved), "Cập nhật trạng thái thành công");
         }
 
         // ── STAFF / ADMIN: Xe sẵn sàng (APPROVED → READY) ───────────────────────
 
         @PutMapping("/{id}/ready")
         @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-        public ResponseEntity<Map<String, Object>> markReady(@PathVariable Long id,
-                                                            Principal principal) {
+        public ApiResponse<Map<String, Object>> markReady(@PathVariable Long id,
+                                                         Principal principal) {
             Deposit saved = depositService.markReady(id, principal.getName());
 
             Map<String, Object> resp = new HashMap<>();
@@ -163,18 +163,18 @@ import jakarta.validation.Valid;
             resp.put("branchName",    saved.getBranch()   != null ? saved.getBranch().getBranchName()    : null);
             resp.put("message",       "Đã thông báo cho khách. Xe sẵn sàng tại showroom.");
 
-            return ResponseEntity.ok(resp);
+            return ApiResponse.success(resp, "Cập nhật trạng thái thành công");
         }
 @GetMapping("/my/stats")
 @PreAuthorize("hasRole('CUSTOMER')")
-public ResponseEntity<?> getMyStats(Principal principal) {
-    return ResponseEntity.ok(depositService.getUserStats(principal.getName()));
+public ApiResponse<Object> getMyStats(Principal principal) {
+    return ApiResponse.success(depositService.getUserStats(principal.getName()));
 }
         // ── STAFF / ADMIN: Hoàn thành (READY → COMPLETED) ────────────────────────
 
         @PutMapping("/{id}/complete")
         @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-        public ResponseEntity<Map<String, Object>> markCompleted(
+        public ApiResponse<Map<String, Object>> markCompleted(
                 @PathVariable Long id,
                 @RequestBody Map<String, Object> body,
                 Principal principal) {
@@ -200,7 +200,7 @@ public ResponseEntity<?> getMyStats(Principal principal) {
                                         ? "Vui lòng tạo link VNPay để khách thanh toán phần còn lại."
                                         : "Đơn hoàn tất thành công!");
 
-            return ResponseEntity.ok(resp);
+            return ApiResponse.success(resp, "Hoàn tất đơn thành công");
         }
 
         // ─────────────────────────────────────────────────────────
@@ -209,13 +209,13 @@ public ResponseEntity<?> getMyStats(Principal principal) {
 
         @GetMapping("/all")
         @PreAuthorize("hasRole('ADMIN')")
-        public List<DepositAdminResponse> getAllDeposits() {
-            return depositService.getAllDeposits();
+        public ApiResponse<List<DepositAdminResponse>> getAllDeposits() {
+            return ApiResponse.success(depositService.getAllDeposits());
         }
 
         @PutMapping("/{id}/cancel-admin")
         @PreAuthorize("hasRole('ADMIN')")
-        public Deposit cancelByAdmin(@PathVariable Long id) {
-            return depositService.cancelByAdmin(id);
+        public ApiResponse<Deposit> cancelByAdmin(@PathVariable Long id) {
+            return ApiResponse.success(depositService.cancelByAdmin(id), "Hủy đơn thành công");
         }
     }

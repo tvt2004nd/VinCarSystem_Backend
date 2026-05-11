@@ -2,8 +2,8 @@ package com.vin.VinSystem.Chat.Controller;
 
 import com.vin.VinSystem.Chat.Entity.ChatMessage;
 import com.vin.VinSystem.Chat.Repository.ChatMessageRepository;
+import com.vin.VinSystem.Common.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,14 +22,12 @@ public class ChatMessageController {
 
     // ── Thu hồi (giữ record, ẩn nội dung) ──────────────────────────
     @PutMapping("/{messageId}/recall")
-    public ResponseEntity<Map<String, Object>> recall(@PathVariable Long messageId) {
+    public ApiResponse<Map<String, Object>> recall(@PathVariable Long messageId) {
         ChatMessage msg = chatMessageRepository.findById(messageId).orElse(null);
-        if (msg == null) return ResponseEntity.notFound().build();
+        if (msg == null) throw new RuntimeException("Message not found");
 
         if (msg.isRecalled()) {
-            Map<String, Object> err = new HashMap<>();
-            err.put("error", "Tin nhắn đã thu hồi trước đó");
-            return ResponseEntity.badRequest().body(err);
+            throw new IllegalArgumentException("Tin nhắn đã thu hồi trước đó");
         }
 
         msg.setRecalled(true);
@@ -52,36 +50,30 @@ public class ChatMessageController {
         Map<String, Object> result = new HashMap<>();
         result.put("success",   true);
         result.put("messageId", messageId);
-        return ResponseEntity.ok(result);
+        return ApiResponse.success(result, "Thu hồi thành công");
     }
 
     // ── Chỉnh sửa nội dung text ──────────────────────────────────────
     @PutMapping("/{messageId}/edit")
-    public ResponseEntity<Map<String, Object>> edit(
+    public ApiResponse<Map<String, Object>> edit(
             @PathVariable Long messageId,
             @RequestBody Map<String, String> body) {
 
         String newMessage = body.get("newMessage");
         if (newMessage == null || newMessage.isBlank()) {
-            Map<String, Object> err = new HashMap<>();
-            err.put("error", "Nội dung tin nhắn không được để trống");
-            return ResponseEntity.badRequest().body(err);
+            throw new IllegalArgumentException("Nội dung tin nhắn không được để trống");
         }
 
         ChatMessage msg = chatMessageRepository.findById(messageId).orElse(null);
-        if (msg == null) return ResponseEntity.notFound().build();
+        if (msg == null) throw new RuntimeException("Message not found");
 
         if (msg.isRecalled()) {
-            Map<String, Object> err = new HashMap<>();
-            err.put("error", "Không thể chỉnh sửa tin nhắn đã thu hồi");
-            return ResponseEntity.badRequest().body(err);
+            throw new IllegalArgumentException("Không thể chỉnh sửa tin nhắn đã thu hồi");
         }
 
         // Chỉ cho phép edit TEXT
         if (msg.getMessageType() != ChatMessage.MessageType.TEXT) {
-            Map<String, Object> err = new HashMap<>();
-            err.put("error", "Chỉ có thể chỉnh sửa tin nhắn văn bản");
-            return ResponseEntity.badRequest().body(err);
+            throw new IllegalArgumentException("Chỉ có thể chỉnh sửa tin nhắn văn bản");
         }
 
         msg.setMessageText(newMessage.trim());
@@ -101,14 +93,14 @@ public class ChatMessageController {
         Map<String, Object> result = new HashMap<>();
         result.put("success",   true);
         result.put("messageId", messageId);
-        return ResponseEntity.ok(result);
+        return ApiResponse.success(result, "Chỉnh sửa thành công");
     }
 
     // ── Xóa hoàn toàn (chỉ admin) ────────────────────────────────────
     @DeleteMapping("/{messageId}")
-    public ResponseEntity<Map<String, Object>> delete(@PathVariable Long messageId) {
+    public ApiResponse<Map<String, Object>> delete(@PathVariable Long messageId) {
         ChatMessage msg = chatMessageRepository.findById(messageId).orElse(null);
-        if (msg == null) return ResponseEntity.notFound().build();
+        if (msg == null) throw new RuntimeException("Message not found");
 
         Long sessionId = msg.getSession().getSessionId();
         chatMessageRepository.deleteById(messageId);
@@ -123,6 +115,6 @@ public class ChatMessageController {
         Map<String, Object> result = new HashMap<>();
         result.put("success",   true);
         result.put("messageId", messageId);
-        return ResponseEntity.ok(result);
+        return ApiResponse.success(result, "Xóa thành công");
     }
 }

@@ -7,10 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import com.vin.VinSystem.Chat.Service.ChatAdminService;
+import com.vin.VinSystem.Common.ApiResponse;
 
 @RestController
 @RequestMapping("/api/admin/chat")
-@CrossOrigin
 public class ChatAdminController {
 
     @Autowired
@@ -23,18 +23,18 @@ public class ChatAdminController {
      */
 
     @GetMapping("/stats")
-    public Map<String, Object> stats() {
-        return chatAdminService.getStats();
+    public ApiResponse<Map<String, Object>> stats() {
+        return ApiResponse.success(chatAdminService.getStats());
     }
 
     @GetMapping("/daily")
-    public Map<String, Object> daily() {
-        return chatAdminService.getDailyStats();
+    public ApiResponse<Map<String, Object>> daily() {
+        return ApiResponse.success(chatAdminService.getDailyStats());
     }
 
     @GetMapping("/staff-stats")
-    public List<Map<String, Object>> staffStats() {
-        return chatAdminService.getStaffStats();
+    public ApiResponse<List<Map<String, Object>>> staffStats() {
+        return ApiResponse.success(chatAdminService.getStaffStats());
     }
 
     /*
@@ -44,8 +44,8 @@ public class ChatAdminController {
      */
 
     @GetMapping("/sessions")
-    public List<Map<String, Object>> sessions() {
-        return chatAdminService.getAllSessions();
+    public ApiResponse<List<Map<String, Object>>> sessions() {
+        return ApiResponse.success(chatAdminService.getAllSessions());
     }
 
     /*
@@ -55,8 +55,8 @@ public class ChatAdminController {
      */
 
     @GetMapping("/session/{id}/messages")
-    public List<Map<String, Object>> messages(@PathVariable Long id) {
-        return chatAdminService.getMessages(id);
+    public ApiResponse<List<Map<String, Object>>> messages(@PathVariable Long id) {
+        return ApiResponse.success(chatAdminService.getMessages(id));
     }
 
     /*
@@ -66,11 +66,11 @@ public class ChatAdminController {
      */
 
     @PostMapping("/session/{id}/join")
-    public Map<String, Object> join(
+    public ApiResponse<Map<String, Object>> join(
             @PathVariable Long id,
             @RequestParam Long staffId) {
 
-        return chatAdminService.joinSession(id, staffId);
+        return ApiResponse.success(chatAdminService.joinSession(id, staffId), "Join session thành công");
     }
 
     /*
@@ -80,11 +80,11 @@ public class ChatAdminController {
      */
 
     @PostMapping("/session/{id}/transfer")
-    public Map<String, Object> transfer(
+    public ApiResponse<Map<String, Object>> transfer(
             @PathVariable Long id,
             @RequestParam Long staffId) {
 
-        return chatAdminService.transferSession(id, staffId);
+        return ApiResponse.success(chatAdminService.transferSession(id, staffId), "Transfer session thành công");
     }
 
     /*
@@ -94,8 +94,8 @@ public class ChatAdminController {
      */
 
     @PostMapping("/session/{id}/close")
-    public Map<String, Object> close(@PathVariable Long id) {
+    public ApiResponse<Map<String, Object>> close(@PathVariable Long id) {
 
-        return chatAdminService.closeSession(id);
+        return ApiResponse.success(chatAdminService.closeSession(id), "Close session thành công");
     }
 }

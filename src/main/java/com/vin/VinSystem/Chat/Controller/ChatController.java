@@ -1,5 +1,6 @@
 package com.vin.VinSystem.Chat.Controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -9,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -27,7 +28,7 @@ import com.vin.VinSystem.Chat.Service.OnlineStaffManager;
 import com.vin.VinSystem.Chat.Service.StaffRoutingService;
 import com.vin.VinSystem.Notification.Service.NotificationService;
 
-@Controller
+@RestController
 public class ChatController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
@@ -106,10 +107,11 @@ public class ChatController {
             );
         }
 
-        // Broadcast lại cho tất cả client (có đầy đủ thông tin file)
+        // Broadcast lại cho tất cả client (có ID và thời gian từ DB)
+        ChatMessageDTO responseDto = new ChatMessageDTO(savedMessage);
         messagingTemplate.convertAndSend(
                 "/topic/chat/" + message.getSessionId(),
-                message   // vì DTO của bạn đã có tất cả field file
+                responseDto
         );
 
         // BOT SESSION (chỉ reply khi là text, không reply khi gửi ảnh/file)
@@ -120,11 +122,8 @@ public class ChatController {
                         message.getMessage()
                 );
 
-                ChatMessageDTO botReply = new ChatMessageDTO(
-                        message.getSessionId(), "BOT", null, reply
-                );
-                // Nếu DTO của bạn có setter thì nên set thêm messageType = "TEXT"
-                chatService.saveMessage(message.getSessionId(), "BOT", null, reply);
+                ChatMessage savedBotMsg = chatService.saveMessage(message.getSessionId(), "BOT", null, reply);
+                ChatMessageDTO botReply = new ChatMessageDTO(savedBotMsg);
 
                 messagingTemplate.convertAndSend(
                         "/topic/chat/" + message.getSessionId(), botReply
@@ -153,6 +152,42 @@ public class ChatController {
                 log.warn("No staff online for session {}", session.getSessionId());
             }
         }
+    }
+
+    /*
+     =========================
+     TYPING & READ STATUS
+     =========================
+     */
+
+    @MessageMapping("/chat/typing")
+    public void handleTyping(Map<String, Object> payload) {
+        Long sessionId = Long.valueOf(payload.get("sessionId").toString());
+        String senderName = (String) payload.get("senderName");
+        boolean isTyping = (boolean) payload.get("isTyping");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("sessionId", sessionId);
+        response.put("senderName", senderName);
+        response.put("isTyping", isTyping);
+        response.put("type", "TYPING");
+
+        messagingTemplate.convertAndSend("/topic/chat/" + sessionId, response);
+    }
+
+    @MessageMapping("/chat/read")
+    public void handleRead(Map<String, Object> payload) {
+        Long sessionId = Long.valueOf(payload.get("sessionId").toString());
+        String senderType = (String) payload.get("senderType");
+
+        chatService.markRead(sessionId, senderType);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("sessionId", sessionId);
+        response.put("senderType", senderType);
+        response.put("type", "READ");
+
+        messagingTemplate.convertAndSend("/topic/chat/" + sessionId, response);
     }
 
     @MessageMapping("/staff/online")

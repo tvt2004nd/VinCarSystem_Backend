@@ -2,8 +2,6 @@ package com.vin.VinSystem.Car.Controller;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +15,7 @@ import com.vin.VinSystem.Car.DTO.CarSeriesCreateDTO;
 import com.vin.VinSystem.Car.DTO.CarSeriesResponseDTO;
 import com.vin.VinSystem.Car.Service.CarSeriesService;
 import com.vin.VinSystem.Car.Controller.exception.ValidationException;
+import com.vin.VinSystem.Common.ApiResponse;
 
 import jakarta.validation.Valid;
 
@@ -35,15 +34,15 @@ public class CarSeriesController {
      * POST /api/series
      */
     @PostMapping
-    public ResponseEntity<CarSeriesResponseDTO> createSeries(@Valid @RequestBody CarSeriesCreateDTO createDTO,
-                                                             BindingResult bindingResult) {
+    public ApiResponse<CarSeriesResponseDTO> createSeries(@Valid @RequestBody CarSeriesCreateDTO createDTO,
+                                                          BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
             throw new ValidationException(errorMessage);
         }
 
         CarSeriesResponseDTO responseDTO = carSeriesService.createSeries(createDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+        return ApiResponse.success(responseDTO, "Tạo series thành công");
     }
 
     /**
@@ -51,9 +50,9 @@ public class CarSeriesController {
      * GET /api/series
      */
     @GetMapping
-    public ResponseEntity<List<CarSeriesResponseDTO>> getAllSeries() {
+    public ApiResponse<List<CarSeriesResponseDTO>> getAllSeries() {
         List<CarSeriesResponseDTO> seriesList = carSeriesService.getAllSeries();
-        return ResponseEntity.ok(seriesList);
+        return ApiResponse.success(seriesList);
     }
 
     /**
@@ -61,9 +60,9 @@ public class CarSeriesController {
      * GET /api/series/{seriesId}
      */
     @GetMapping("/{seriesId}")
-    public ResponseEntity<CarSeriesResponseDTO> getSeriesById(@PathVariable Long seriesId) {
+    public ApiResponse<CarSeriesResponseDTO> getSeriesById(@PathVariable Long seriesId) {
         CarSeriesResponseDTO responseDTO = carSeriesService.getSeriesDetailById(seriesId);
-        return ResponseEntity.ok(responseDTO);
+        return ApiResponse.success(responseDTO);
     }
 
     /**
@@ -71,8 +70,8 @@ public class CarSeriesController {
      * DELETE /api/series/{seriesId}
      */
     @DeleteMapping("/{seriesId}")
-    public ResponseEntity<Void> deleteSeries(@PathVariable Long seriesId) {
+    public ApiResponse<Void> deleteSeries(@PathVariable Long seriesId) {
         carSeriesService.deleteSeries(seriesId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null, "Xóa series thành công");
     }
 }

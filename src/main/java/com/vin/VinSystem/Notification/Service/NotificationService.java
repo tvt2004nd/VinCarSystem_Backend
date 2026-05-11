@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.vin.VinSystem.Auth.Entity.User;
+import com.vin.VinSystem.Auth.Repository.DeviceTokenRepository;
 import com.vin.VinSystem.Auth.Repository.UserRepository;
 import com.vin.VinSystem.Auth.Service.MailService;
 import com.vin.VinSystem.Notification.Entity.Notification;
@@ -28,17 +29,23 @@ private final MailService mailService;
     private final UserRepository         userRepository;
     private final JavaMailSender         mailSender;
     private final SimpMessagingTemplate  messagingTemplate;
+    private final FcmService             fcmService;
+    private final DeviceTokenRepository  deviceTokenRepository;
 
     public NotificationService(NotificationRepository notificationRepository,
                                 UserRepository userRepository,
                                 JavaMailSender mailSender,
                                 SimpMessagingTemplate messagingTemplate,
-                                MailService mailService) {
+                                MailService mailService,
+                                FcmService fcmService,
+                                DeviceTokenRepository deviceTokenRepository) {
         this.notificationRepository = notificationRepository;
         this.userRepository         = userRepository;
         this.mailSender             = mailSender;
         this.messagingTemplate      = messagingTemplate;
         this.mailService = mailService;
+        this.fcmService = fcmService;
+        this.deviceTokenRepository = deviceTokenRepository;
     }
 
     // ── Core ─────────────────────────────────────────────────────────────────
@@ -65,17 +72,21 @@ private final MailService mailService;
 
     private void pushRealtime(Long userId, Notification n) {
         try {
-            Map<String, Object> p = new HashMap<>();
-            p.put("notificationId", n.getNotificationId());
-            p.put("title",          n.getTitle());
-            p.put("message",        n.getMessage());
-            p.put("type",           n.getType());
-            p.put("referenceId",    n.getReferenceId());
-            p.put("isRead",         false);
-            p.put("createdAt",      n.getCreatedAt() != null ? n.getCreatedAt().toString() : null);
-            messagingTemplate.convertAndSend("/topic/notifications/" + userId, p);
+            Map<String, String> data = new HashMap<>();
+            data.put("notificationId", String.valueOf(n.getNotificationId()));
+            data.put("type",           n.getType());
+            data.put("referenceId",    n.getReferenceId());
+
+            // 1. WebSocket Push (For Web/Active Mobile)
+            messagingTemplate.convertAndSend("/topic/notifications/" + userId, n);
+
+            // 2. FCM Push (For Background Mobile)
+            deviceTokenRepository.findByUser_UserId(userId).forEach(token -> {
+                fcmService.sendPushNotification(token.getFcmToken(), n.getTitle(), n.getMessage(), data);
+            });
+
         } catch (Exception e) {
-            log.error("[Notify] WebSocket push failed userId={} err={}", userId, e.getMessage());
+            log.error("[Notify] Push failed userId={} err={}", userId, e.getMessage());
         }
     }
 

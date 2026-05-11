@@ -3,6 +3,7 @@ package com.vin.VinSystem.Dashboard.Controller;
 import org.springframework.web.bind.annotation.*;
 import com.vin.VinSystem.Dashboard.Service.DashboardService;
 import com.vin.VinSystem.Dashboard.Response.DashboardResponse;
+import com.vin.VinSystem.Common.ApiResponse;
 
 @RestController
 @RequestMapping("/api/admin/dashboard")
@@ -15,7 +16,7 @@ public class DashboardController {
     }
 
  @GetMapping
-    public DashboardResponse getDashboard(
+    public ApiResponse<DashboardResponse> getDashboard(
         @RequestParam(defaultValue = "month") String type,
         @RequestParam(required = false) String status,
         @RequestParam(required = false) String search,
@@ -23,6 +24,6 @@ public class DashboardController {
         @RequestParam(required = false) Integer year,   // ← thêm
         @RequestParam(required = false) Integer month   // ← thêm
     ) {
-        return service.getDashboard(type, status, search, category, year, month);
+        return ApiResponse.success(service.getDashboard(type, status, search, category, year, month));
     }
 }

@@ -2,8 +2,8 @@ package com.vin.VinSystem.Chat.Controller;
 
 import java.util.List;
 
+import com.vin.VinSystem.Common.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,7 +46,7 @@ public class ChatSessionController {
      */
 
     @PostMapping
-    public ChatSessionDTO createSession(
+    public ApiResponse<ChatSessionDTO> createSession(
             @RequestParam String type,
             @RequestBody SessionRequest request
     ) {
@@ -57,15 +57,17 @@ public class ChatSessionController {
                         type
                 );
 
-        return ChatSessionMapper.toDTO(session);
+        return ApiResponse.success(ChatSessionMapper.toDTO(session), "Tạo phiên chat thành công");
     }
-@GetMapping("/staff/sessions")
-public List<ChatSessionDTO> staffSessions(@RequestParam Long staffId) {
-    return chatSessionService.getSessionsByStaff(staffId)
-            .stream()
-            .map(ChatSessionMapper::toDTO)
-            .toList();
-}
+
+    @GetMapping("/staff/sessions")
+    public ApiResponse<List<ChatSessionDTO>> staffSessions(@RequestParam Long staffId) {
+        List<ChatSessionDTO> list = chatSessionService.getSessionsByStaff(staffId)
+                .stream()
+                .map(ChatSessionMapper::toDTO)
+                .toList();
+        return ApiResponse.success(list);
+    }
 
     public static class SessionRequest {
 
@@ -87,7 +89,7 @@ public List<ChatSessionDTO> staffSessions(@RequestParam Long staffId) {
      */
 
     @GetMapping("/session/{sessionId}/messages")
-    public ResponseEntity<List<ChatMessageDTO>> getMessages(
+    public ApiResponse<List<ChatMessageDTO>> getMessages(
             @PathVariable Long sessionId
     ) {
 
@@ -97,7 +99,7 @@ public List<ChatSessionDTO> staffSessions(@RequestParam Long staffId) {
                         .map(ChatMessageDTO::new)
                         .toList();
 
-        return ResponseEntity.ok(list);
+        return ApiResponse.success(list);
     }
 
     /*
@@ -107,11 +109,11 @@ public List<ChatSessionDTO> staffSessions(@RequestParam Long staffId) {
      */
 
     @DeleteMapping("/session/{sessionId}/history")
-    public ResponseEntity<Void> clearHistory(@PathVariable Long sessionId) {
+    public ApiResponse<Void> clearHistory(@PathVariable Long sessionId) {
 
         historyService.clearHistory(sessionId);
 
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null, "Đã xóa lịch sử chat");
     }
 
     /*
@@ -121,7 +123,7 @@ public List<ChatSessionDTO> staffSessions(@RequestParam Long staffId) {
      */
 
     @PostMapping("/session/{sessionId}/restore")
-    public ResponseEntity<Void> restoreHistory(
+    public ApiResponse<Void> restoreHistory(
             @PathVariable Long sessionId
     ) {
 
@@ -144,14 +146,6 @@ public List<ChatSessionDTO> staffSessions(@RequestParam Long staffId) {
             );
         }
 
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null, "Đã khôi phục lịch sử AI");
     }
-
-    /*
-     ================================
-     STAFF SESSION LIST
-     ================================
-     */
-
-
 }

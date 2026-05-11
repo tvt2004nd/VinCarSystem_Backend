@@ -2,8 +2,6 @@ package com.vin.VinSystem.Car.Controller;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +14,7 @@ import com.vin.VinSystem.Car.Controller.exception.ValidationException;
 import com.vin.VinSystem.Car.DTO.CarColorCreateDTO;
 import com.vin.VinSystem.Car.DTO.CarColorResponseDTO;
 import com.vin.VinSystem.Car.Service.CarColorService;
+import com.vin.VinSystem.Common.ApiResponse;
 
 import jakarta.validation.Valid;
 
@@ -34,15 +33,15 @@ public class CarColorController {
      * POST /api/colors
      */
     @PostMapping
-    public ResponseEntity<CarColorResponseDTO> createColor(@Valid @RequestBody CarColorCreateDTO createDTO,
-                                                           BindingResult bindingResult) {
+    public ApiResponse<CarColorResponseDTO> createColor(@Valid @RequestBody CarColorCreateDTO createDTO,
+                                                        BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
             throw new ValidationException(errorMessage);
         }
 
         CarColorResponseDTO responseDTO = carColorService.createColor(createDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+        return ApiResponse.success(responseDTO, "Tạo màu xe thành công");
     }
 
     /**
@@ -50,9 +49,9 @@ public class CarColorController {
      * GET /api/colors
      */
     @GetMapping
-    public ResponseEntity<List<CarColorResponseDTO>> getAllColors() {
+    public ApiResponse<List<CarColorResponseDTO>> getAllColors() {
         List<CarColorResponseDTO> colors = carColorService.getAllColors();
-        return ResponseEntity.ok(colors);
+        return ApiResponse.success(colors);
     }
 
     /**
@@ -60,9 +59,9 @@ public class CarColorController {
      * GET /api/colors/{colorId}
      */
     @GetMapping("/{colorId}")
-    public ResponseEntity<CarColorResponseDTO> getColorById(@PathVariable Long colorId) {
+    public ApiResponse<CarColorResponseDTO> getColorById(@PathVariable Long colorId) {
         CarColorResponseDTO responseDTO = carColorService.getColorDetailById(colorId);
-        return ResponseEntity.ok(responseDTO);
+        return ApiResponse.success(responseDTO);
     }
 }
 

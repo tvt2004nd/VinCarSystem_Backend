@@ -6,7 +6,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vin.VinSystem.Common.ApiResponse;
 import com.vin.VinSystem.Payment.DTO.PaymentDTO;
 import com.vin.VinSystem.Payment.DTO.VNPayRequest;
 import com.vin.VinSystem.Payment.Service.PaymentService;
@@ -35,7 +35,7 @@ public class VNPayController {
     // ─────────────────────────────────────────────────────────────────────────
 
     @PostMapping("/create-payment")
-    public ResponseEntity<Map<String, String>> createPayment(
+    public ApiResponse<Map<String, String>> createPayment(
             @RequestBody VNPayRequest request,
             HttpServletRequest httpRequest) {
 
@@ -62,7 +62,7 @@ public class VNPayController {
         resp.put("paymentUrl", paymentUrl);
         resp.put("txnRef",     txnRef);
         resp.put("paymentId",  String.valueOf(payment.getPaymentId()));
-        return ResponseEntity.ok(resp);
+        return ApiResponse.success(resp, "Tạo link VNPay thành công");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ public class VNPayController {
     // ─────────────────────────────────────────────────────────────────────────
 
     @PostMapping("/process-return")
-    public ResponseEntity<Map<String, Object>> processReturn(
+    public ApiResponse<Map<String, Object>> processReturn(
             @RequestBody Map<String, String> params) {
 
         String txnRef   = params.get("vnp_TxnRef");
@@ -86,7 +86,7 @@ public class VNPayController {
             result.put("success", false);
             result.put("message", "Chữ ký không hợp lệ");
             result.put("caller",  caller);
-            return ResponseEntity.ok(result);
+            return ApiResponse.success(result);
         }
 
         if ("00".equals(respCode)) {
@@ -116,7 +116,7 @@ public class VNPayController {
             log.warn("[VNPay] process-return — không lấy được payment detail: {}", e.getMessage());
         }
 
-        return ResponseEntity.ok(result);
+        return ApiResponse.success(result);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ public class VNPayController {
     // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping("/payment-status")
-    public ResponseEntity<Map<String, Object>> paymentStatus(@RequestParam String txnRef) {
+    public ApiResponse<Map<String, Object>> paymentStatus(@RequestParam String txnRef) {
         log.info("[VNPay] payment-status txnRef={}", txnRef);
         Map<String, Object> result = new HashMap<>();
         try {
@@ -136,12 +136,10 @@ public class VNPayController {
             result.put("depositId",     p.getDepositId());
             result.put("depositStatus", p.getDepositStatus());
             result.put("carName",       p.getCarName());
-            return ResponseEntity.ok(result);
+            return ApiResponse.success(result);
         } catch (Exception e) {
             log.error("[VNPay] payment-status error txnRef={} msg={}", txnRef, e.getMessage());
-            result.put("success", false);
-            result.put("message", "Không tìm thấy giao dịch.");
-            return ResponseEntity.ok(result);
+            throw new RuntimeException("Không tìm thấy giao dịch.");
         }
     }
 
@@ -150,7 +148,7 @@ public class VNPayController {
     // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping("/ipn")
-    public ResponseEntity<Map<String, String>> ipn(@RequestParam Map<String, String> params) {
+    public ApiResponse<Map<String, String>> ipn(@RequestParam Map<String, String> params) {
         log.info("[VNPay] IPN txnRef={} responseCode={}",
                  params.get("vnp_TxnRef"), params.get("vnp_ResponseCode"));
         Map<String, String> result = new HashMap<>();
@@ -158,7 +156,7 @@ public class VNPayController {
         if (!vnPayService.validateCallback(params)) {
             result.put("RspCode", "97");
             result.put("Message", "Invalid Checksum");
-            return ResponseEntity.ok(result);
+            return ApiResponse.success(result);
         }
 
         String respCode = params.get("vnp_ResponseCode");
@@ -169,7 +167,7 @@ public class VNPayController {
 
         result.put("RspCode", "00");
         result.put("Message", "Confirm Success");
-        return ResponseEntity.ok(result);
+        return ApiResponse.success(result);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -177,7 +175,7 @@ public class VNPayController {
     // ─────────────────────────────────────────────────────────────────────────
 
     @PostMapping("/create-payment-by-id")
-    public ResponseEntity<Map<String, String>> createPaymentById(
+    public ApiResponse<Map<String, String>> createPaymentById(
             @RequestBody Map<String, Object> request,
             HttpServletRequest httpRequest) {
 
@@ -207,7 +205,7 @@ public class VNPayController {
         resp.put("paymentUrl", paymentUrl);
         resp.put("txnRef",     txnRef);
         resp.put("paymentId",  String.valueOf(paymentId));
-        return ResponseEntity.ok(resp);
+        return ApiResponse.success(resp, "Tạo link VNPay thành công");
     }
 
     private String getErrorMessage(String code) {

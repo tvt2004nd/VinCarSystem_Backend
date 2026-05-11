@@ -1,31 +1,18 @@
 package com.vin.VinSystem.Appointment.Controller;
 
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.vin.VinSystem.Appointment.DTO.AppointmentResponseDTO;
-import com.vin.VinSystem.Appointment.DTO.CreateAppointmentDTO;
-import com.vin.VinSystem.Appointment.DTO.UpdateAppointmentDTO;
-import com.vin.VinSystem.Appointment.DTO.UpdateStatusRequest;
+import com.vin.VinSystem.Appointment.DTO.*;
 import com.vin.VinSystem.Appointment.Service.AppointmentService;
 import com.vin.VinSystem.Auth.Entity.User;
 import com.vin.VinSystem.Auth.Repository.UserRepository;
+import com.vin.VinSystem.Common.ApiResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/appointments")
-@CrossOrigin(origins = "*")
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
@@ -38,147 +25,76 @@ public class AppointmentController {
         this.appointmentService = appointmentService;
         this.userRepository = userRepository;
     }
-@GetMapping("/branch/{branchId}")
-@PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-public ResponseEntity<List<AppointmentResponseDTO>> getByBranch(
-        @PathVariable Long branchId) {
-    return ResponseEntity.ok(appointmentService.getAppointmentsByBranch(branchId));
-}
-    /*
-    ===============================
-    CREATE APPOINTMENT
-    ===============================
-    */
+
+    @GetMapping("/branch/{branchId}")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ApiResponse<List<AppointmentResponseDTO>> getByBranch(@PathVariable Long branchId) {
+        return ApiResponse.success(appointmentService.getAppointmentsByBranch(branchId));
+    }
 
     @PostMapping("/create")
-    public ResponseEntity<AppointmentResponseDTO> createAppointment(
+    public ApiResponse<AppointmentResponseDTO> createAppointment(
             Authentication authentication,
             @RequestBody CreateAppointmentDTO dto
     ) {
         String username = authentication.getName();
-
-        User customer = userRepository
-                .findByUsername(username)
+        User customer = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        AppointmentResponseDTO response =
-                appointmentService.createAppointment(customer, dto);
-
-        return ResponseEntity.ok(response);
+        AppointmentResponseDTO response = appointmentService.createAppointment(customer, dto);
+        return ApiResponse.success(response, "Đặt lịch thành công");
     }
-
-    /*
-    ===============================
-    CUSTOMER APPOINTMENTS
-    ===============================
-    */
 
     @GetMapping("/my")
-    public ResponseEntity<List<AppointmentResponseDTO>> myAppointments(
-            Authentication authentication
-    ) {
+    public ApiResponse<List<AppointmentResponseDTO>> myAppointments(Authentication authentication) {
         String username = authentication.getName();
-
-        User customer = userRepository
-                .findByUsername(username)
+        User customer = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        List<AppointmentResponseDTO> list =
-                appointmentService.getCustomerAppointments(customer.getUserId());
-
-        return ResponseEntity.ok(list);
+        return ApiResponse.success(appointmentService.getCustomerAppointments(customer.getUserId()));
     }
-
-    /*
-    ===============================
-    STAFF APPOINTMENTS
-    ===============================
-    */
 
     @GetMapping("/staff")
-    public ResponseEntity<List<AppointmentResponseDTO>> staffAppointments(
-            Authentication authentication
-    ) {
+    public ApiResponse<List<AppointmentResponseDTO>> staffAppointments(Authentication authentication) {
         String username = authentication.getName();
-
-        User staff = userRepository
-                .findByUsername(username)
+        User staff = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        List<AppointmentResponseDTO> list =
-                appointmentService.getStaffAppointments(staff.getUserId());
-
-        return ResponseEntity.ok(list);
+        return ApiResponse.success(appointmentService.getStaffAppointments(staff.getUserId()));
     }
 
-    /*
-    ===============================
-    UPDATE APPOINTMENT (USER)
-    ===============================
-    */
-
     @PutMapping("/update")
-    public ResponseEntity<AppointmentResponseDTO> updateAppointment(
+    public ApiResponse<AppointmentResponseDTO> updateAppointment(
             Authentication authentication,
             @RequestBody UpdateAppointmentDTO dto
     ) {
         String username = authentication.getName();
-
-        User user = userRepository
-                .findByUsername(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        AppointmentResponseDTO response =
-                appointmentService.updateAppointment(dto, user.getUserId());
-
-        return ResponseEntity.ok(response);
+        AppointmentResponseDTO response = appointmentService.updateAppointment(dto, user.getUserId());
+        return ApiResponse.success(response, "Cập nhật lịch thành công");
     }
 
-    /*
-    ===============================
-    CANCEL APPOINTMENT (USER)
-    ===============================
-    */
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> cancelAppointment(
+    public ApiResponse<Void> cancelAppointment(
             Authentication authentication,
             @PathVariable Long id
     ) {
         String username = authentication.getName();
-
-        User user = userRepository
-                .findByUsername(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         appointmentService.cancelAppointmentByUser(id, user.getUserId());
-
-        return ResponseEntity.ok("Appointment cancelled");
+        return ApiResponse.success(null, "Hủy lịch thành công");
     }
+
     @PutMapping("/{id}/status")
-public ResponseEntity<AppointmentResponseDTO> staffUpdateStatus(
-        @PathVariable Long id,
-        @RequestBody UpdateStatusRequest request
-) {
-    return ResponseEntity.ok(
-        appointmentService.staffUpdateStatus(id, request.getStatus())
-    );
-}
-    /*
-    ===============================
-    APPOINTMENT DETAIL
-    ===============================
-    */
+    public ApiResponse<AppointmentResponseDTO> staffUpdateStatus(
+            @PathVariable Long id,
+            @RequestBody UpdateStatusRequest request
+    ) {
+        AppointmentResponseDTO response = appointmentService.staffUpdateStatus(id, request.getStatus());
+        return ApiResponse.success(response, "Cập nhật trạng thái thành công");
+    }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AppointmentResponseDTO> getAppointmentDetail(
-            @PathVariable Long id
-    ) {
-        AppointmentResponseDTO response =
-                appointmentService.getAppointmentById(id);
-
-        return ResponseEntity.ok(response);
+    public ApiResponse<AppointmentResponseDTO> getAppointmentDetail(@PathVariable Long id) {
+        return ApiResponse.success(appointmentService.getAppointmentById(id));
     }
-    
-
 }

@@ -1,7 +1,5 @@
 package com.vin.VinSystem.Car.Controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +13,7 @@ import com.vin.VinSystem.Car.DTO.ModelColorOptionCreateDTO;
 import com.vin.VinSystem.Car.DTO.ModelColorOptionResponseDTO;
 import com.vin.VinSystem.Car.Service.ModelColorOptionService;
 import com.vin.VinSystem.Car.Controller.exception.ValidationException;
+import com.vin.VinSystem.Common.ApiResponse;
 
 import jakarta.validation.Valid;
 
@@ -29,26 +28,26 @@ public class ModelColorOptionController {
     }
 
     @PostMapping
-    public ResponseEntity<ModelColorOptionResponseDTO> createOrUpdate(
+    public ApiResponse<ModelColorOptionResponseDTO> createOrUpdate(
             @Valid @RequestBody ModelColorOptionCreateDTO dto,
             BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             throw new ValidationException(bindingResult.getAllErrors().get(0).getDefaultMessage());
         }
         ModelColorOptionResponseDTO response = optionService.addOrUpdateOption(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ApiResponse.success(response, "Cập nhật option thành công");
     }
 
     @GetMapping("/{modelId}/{colorId}")
-    public ResponseEntity<ModelColorOptionResponseDTO> get(@PathVariable Long modelId,
-                                                            @PathVariable Long colorId) {
-        return ResponseEntity.ok(optionService.getOption(modelId, colorId));
+    public ApiResponse<ModelColorOptionResponseDTO> get(@PathVariable Long modelId,
+                                                        @PathVariable Long colorId) {
+        return ApiResponse.success(optionService.getOption(modelId, colorId));
     }
 
     @DeleteMapping("/{modelId}/{colorId}")
-    public ResponseEntity<Void> delete(@PathVariable Long modelId,
-                                       @PathVariable Long colorId) {
+    public ApiResponse<Void> delete(@PathVariable Long modelId,
+                                    @PathVariable Long colorId) {
         optionService.deleteOption(modelId, colorId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null, "Xóa option thành công");
     }
 }

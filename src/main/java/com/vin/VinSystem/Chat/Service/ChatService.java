@@ -80,4 +80,9 @@ public class ChatService {
         return chatMessageRepository
                 .findBySessionSessionIdOrderByCreatedAtAsc(sessionId);
     }
+
+    // ── Đánh dấu đã xem ─────────────────────────────────────────────
+    public void markRead(Long sessionId, String senderType) {
+        chatMessageRepository.markAllAsRead(sessionId, senderType);
+    }
 }

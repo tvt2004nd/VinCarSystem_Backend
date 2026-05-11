@@ -19,6 +19,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.vin.VinSystem.Auth.Entity.User;
+import com.vin.VinSystem.Auth.Repository.DeviceTokenRepository;
 import com.vin.VinSystem.Auth.Repository.UserRepository;
 import com.vin.VinSystem.Auth.Service.MailService;
 import com.vin.VinSystem.Notification.Entity.Notification;
@@ -33,6 +34,8 @@ class NotificationServiceTest {
     JavaMailSender         mailSender             = mock(JavaMailSender.class);
     SimpMessagingTemplate  messagingTemplate      = mock(SimpMessagingTemplate.class);
     MailService            mailService            = mock(MailService.class); // ← thêm dòng này
+    FcmService             fcmService             = mock(FcmService.class);
+    DeviceTokenRepository  deviceTokenRepository  = mock(DeviceTokenRepository.class);
     
     NotificationService service;
 
@@ -43,8 +46,13 @@ class NotificationServiceTest {
             userRepository,
             mailSender,
             messagingTemplate,
-            mailService
+            mailService,
+            fcmService,
+            deviceTokenRepository
         );
+
+        // default: no device tokens, so pushRealtime won't call FCM
+        when(deviceTokenRepository.findByUser_UserId(any())).thenReturn(List.of());
     }
     // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -179,7 +187,7 @@ class NotificationServiceTest {
         service.sendEmail("", "Subject", "Body");
         service.sendEmail(null, "Subject", "Body");
 
-        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+        verify(mailService, never()).sendEmail(any(), any(), any());
     }
 
     // ── sendEmailWithPdf ──────────────────────────────────────────────────
@@ -199,7 +207,7 @@ class NotificationServiceTest {
     void sendEmailWithPdf_emptyTo_skip() {
         service.sendEmailWithPdf(null, "Sub", "Body", new byte[]{1}, "file.pdf");
 
-        verify(mailSender, never()).createMimeMessage();
+        verify(mailService, never()).sendEmailWithPdf(any(), any(), any(), any(), any());
     }
 
     // ── getUnreadByUser / getAllByUser ────────────────────────────────────

@@ -6,9 +6,7 @@ import com.vin.VinSystem.Branch.Repository.BranchRepository;
 import com.vin.VinSystem.Deposit.Repository.DepositRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,8 +36,7 @@ public class BranchService {
     public Branch saveBranch(Branch branch) {
 
         if (branch.getLocation() == null || branch.getLocation().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Địa chỉ không được để trống");
+            throw new IllegalArgumentException("Địa chỉ không được để trống");
         }
 
         return branchRepository.save(branch);
@@ -47,17 +44,15 @@ public class BranchService {
 
 public void deleteBranch(Long id) {
     if (!branchRepository.existsById(id)) {
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Branch not found");
+        throw new RuntimeException("Branch not found");
     }
     // Kiểm tra còn deposit không
     if (depositRepository.existsByBranch_BranchId(id)) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-            "Chi nhánh đang có đơn đặt cọc, không thể xóa");
+        throw new IllegalArgumentException("Chi nhánh đang có đơn đặt cọc, không thể xóa");
     }
     // Kiểm tra còn staff không
     if (staffRepository.existsByBranch_BranchId(id)) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-            "Chi nhánh đang có nhân viên, không thể xóa");
+        throw new IllegalArgumentException("Chi nhánh đang có nhân viên, không thể xóa");
     }
     branchRepository.deleteById(id);
 }

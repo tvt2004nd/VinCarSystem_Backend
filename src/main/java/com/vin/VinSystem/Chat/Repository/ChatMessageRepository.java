@@ -120,4 +120,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Modifying
     @Transactional
     void deleteByMessageId(Long messageId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE ChatMessage m SET m.status = 'READ' WHERE m.session.sessionId = :sessionId AND m.senderType <> :senderType AND m.status <> 'READ'")
+    void markAllAsRead(Long sessionId, String senderType);
 }

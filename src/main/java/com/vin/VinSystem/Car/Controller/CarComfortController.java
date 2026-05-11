@@ -1,7 +1,5 @@
 package com.vin.VinSystem.Car.Controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +13,7 @@ import com.vin.VinSystem.Car.DTO.CarComfortCreateDTO;
 import com.vin.VinSystem.Car.DTO.CarComfortResponseDTO;
 import com.vin.VinSystem.Car.Service.CarComfortService;
 import com.vin.VinSystem.Car.Controller.exception.ValidationException;
+import com.vin.VinSystem.Common.ApiResponse;
 
 import jakarta.validation.Valid;
 
@@ -33,16 +32,16 @@ public class CarComfortController {
      * POST /api/cars/{carId}/comfort
      */
     @PostMapping
-    public ResponseEntity<CarComfortResponseDTO> addOrUpdateCarComfort(@PathVariable Long carId,
-                                                                       @Valid @RequestBody CarComfortCreateDTO comfortDTO,
-                                                                       BindingResult bindingResult) {
+    public ApiResponse<CarComfortResponseDTO> addOrUpdateCarComfort(@PathVariable Long carId,
+                                                                    @Valid @RequestBody CarComfortCreateDTO comfortDTO,
+                                                                    BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
             throw new ValidationException(errorMessage);
         }
 
         CarComfortResponseDTO responseDTO = carComfortService.addOrUpdateCarComfort(carId, comfortDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+        return ApiResponse.success(responseDTO, "Cập nhật tiện nghi thành công");
     }
 
     /**
@@ -50,9 +49,9 @@ public class CarComfortController {
      * GET /api/cars/{carId}/comfort
      */
     @GetMapping
-    public ResponseEntity<CarComfortResponseDTO> getCarComfort(@PathVariable Long carId) {
+    public ApiResponse<CarComfortResponseDTO> getCarComfort(@PathVariable Long carId) {
         CarComfortResponseDTO responseDTO = carComfortService.getCarComfort(carId);
-        return ResponseEntity.ok(responseDTO);
+        return ApiResponse.success(responseDTO);
     }
 
     /**
@@ -60,9 +59,9 @@ public class CarComfortController {
      * DELETE /api/cars/{carId}/comfort
      */
     @DeleteMapping
-    public ResponseEntity<Void> deleteCarComfort(@PathVariable Long carId) {
+    public ApiResponse<Void> deleteCarComfort(@PathVariable Long carId) {
         carComfortService.deleteCarComfort(carId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null, "Xóa tiện nghi thành công");
     }
 }
 

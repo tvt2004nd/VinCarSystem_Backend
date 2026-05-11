@@ -3,9 +3,7 @@ package com.vin.VinSystem.Auth.Controller;
 import java.io.IOException;
 import java.util.Map;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,11 +12,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.vin.VinSystem.Auth.Entity.User;
 import com.vin.VinSystem.Auth.Repository.UserRepository;
+import com.vin.VinSystem.Common.ApiResponse;
 import com.vin.VinSystem.Config.CloudinaryService;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin
 public class AvatarController {
 
     private final UserRepository userRepository;
@@ -31,7 +29,7 @@ public class AvatarController {
     }
 
    @PostMapping("/upload-avatar")
-public ResponseEntity<?> uploadAvatar(
+public ApiResponse<Map<String, String>> uploadAvatar(
         @RequestParam("file") MultipartFile file,
         Authentication authentication) throws IOException {
 
@@ -52,6 +50,6 @@ public ResponseEntity<?> uploadAvatar(
     user.setAvatarPublicId(publicId);
     userRepository.save(user);
 
-    return ResponseEntity.ok(imageUrl);
+    return ApiResponse.success(Map.of("avatarUrl", imageUrl), "Upload avatar thành công");
 }
 }

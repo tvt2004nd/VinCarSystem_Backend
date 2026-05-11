@@ -1,7 +1,5 @@
 package com.vin.VinSystem.Car.Controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +13,7 @@ import com.vin.VinSystem.Car.DTO.CarDimensionsCreateDTO;
 import com.vin.VinSystem.Car.DTO.CarDimensionsResponseDTO;
 import com.vin.VinSystem.Car.Service.CarDimensionsService;
 import com.vin.VinSystem.Car.Controller.exception.ValidationException;
+import com.vin.VinSystem.Common.ApiResponse;
 
 import jakarta.validation.Valid;
 
@@ -29,7 +28,7 @@ public class CarDimensionsController {
     }
 
     @PostMapping
-    public ResponseEntity<CarDimensionsResponseDTO> addOrUpdate(
+    public ApiResponse<CarDimensionsResponseDTO> addOrUpdate(
             @PathVariable Long carId,
             @Valid @RequestBody CarDimensionsCreateDTO dto,
             BindingResult bindingResult) {
@@ -38,17 +37,17 @@ public class CarDimensionsController {
             throw new ValidationException(error);
         }
         CarDimensionsResponseDTO response = carDimensionsService.addOrUpdateCarDimensions(carId, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ApiResponse.success(response, "Cập nhật kích thước thành công");
     }
 
     @GetMapping
-    public ResponseEntity<CarDimensionsResponseDTO> get(@PathVariable Long carId) {
-        return ResponseEntity.ok(carDimensionsService.getCarDimensions(carId));
+    public ApiResponse<CarDimensionsResponseDTO> get(@PathVariable Long carId) {
+        return ApiResponse.success(carDimensionsService.getCarDimensions(carId));
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> delete(@PathVariable Long carId) {
+    public ApiResponse<Void> delete(@PathVariable Long carId) {
         carDimensionsService.deleteCarDimensions(carId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null, "Xóa kích thước thành công");
     }
 }

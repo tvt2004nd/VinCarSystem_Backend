@@ -1,7 +1,5 @@
 package com.vin.VinSystem.Car.Controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +13,7 @@ import com.vin.VinSystem.Car.DTO.SpecsCommonCreateDTO;
 import com.vin.VinSystem.Car.DTO.SpecsCommonResponseDTO;
 import com.vin.VinSystem.Car.Service.SpecsCommonService;
 import com.vin.VinSystem.Car.Controller.exception.ValidationException;
+import com.vin.VinSystem.Common.ApiResponse;
 
 import jakarta.validation.Valid;
 
@@ -28,7 +27,7 @@ public class SpecsCommonController {
     }
 
     @PostMapping
-    public ResponseEntity<SpecsCommonResponseDTO> addOrUpdate(
+    public ApiResponse<SpecsCommonResponseDTO> addOrUpdate(
             @PathVariable Long carId,
             @Valid @RequestBody SpecsCommonCreateDTO dto,
             BindingResult bindingResult) {
@@ -36,17 +35,17 @@ public class SpecsCommonController {
             throw new ValidationException(bindingResult.getAllErrors().get(0).getDefaultMessage());
         }
         SpecsCommonResponseDTO response = specsCommonService.addOrUpdateSpecsCommon(carId, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ApiResponse.success(response, "Cập nhật thông số thành công");
     }
 
     @GetMapping
-    public ResponseEntity<SpecsCommonResponseDTO> get(@PathVariable Long carId) {
-        return ResponseEntity.ok(specsCommonService.getSpecsCommon(carId));
+    public ApiResponse<SpecsCommonResponseDTO> get(@PathVariable Long carId) {
+        return ApiResponse.success(specsCommonService.getSpecsCommon(carId));
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> delete(@PathVariable Long carId) {
+    public ApiResponse<Void> delete(@PathVariable Long carId) {
         specsCommonService.deleteSpecsCommon(carId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null, "Xóa thông số thành công");
     }
 }

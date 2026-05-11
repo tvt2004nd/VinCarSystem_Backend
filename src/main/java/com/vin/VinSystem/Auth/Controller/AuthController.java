@@ -1,22 +1,12 @@
 package com.vin.VinSystem.Auth.Controller;
 
+import com.vin.VinSystem.Common.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.vin.VinSystem.Auth.DTO.ChangePasswordRequest;
-import com.vin.VinSystem.Auth.DTO.ForgotPasswordRequest;
-import com.vin.VinSystem.Auth.DTO.LoginRequest;
-import com.vin.VinSystem.Auth.DTO.LoginResponse;
-import com.vin.VinSystem.Auth.DTO.RegisterRequest;
-import com.vin.VinSystem.Auth.DTO.ResetPasswordRequest;
-import com.vin.VinSystem.Auth.DTO.UserResponse;
-import com.vin.VinSystem.Auth.DTO.VerifyOtpRequest;
+import com.vin.VinSystem.Auth.DTO.*;
 import com.vin.VinSystem.Auth.Service.AuthService;
 
 @RestController
@@ -28,71 +18,72 @@ public class AuthController {
 
     // REGISTER
     @PostMapping("/register")
-    public UserResponse register(@RequestBody RegisterRequest request) {
-        return authService.register(request);
+    public ApiResponse<UserResponse> register(@RequestBody RegisterRequest request) {
+        return ApiResponse.success(authService.register(request), "Đăng ký thành công");
     }
+
     // SEND OTP REGISTER
-@PostMapping("/register/send-otp")
-public ResponseEntity<String> sendRegisterOtp(@RequestBody RegisterRequest request) {
+    @PostMapping("/register/send-otp")
+    public ApiResponse<Void> sendRegisterOtp(@RequestBody RegisterRequest request) {
+        authService.sendRegisterOtp(request);
+        return ApiResponse.success(null, "OTP đã được gửi tới email");
+    }
 
-    authService.sendRegisterOtp(request);
-
-    return ResponseEntity.ok("OTP đã được gửi tới email");
-}
-// VERIFY OTP REGISTER
-@PostMapping("/register/verify")
-public UserResponse verifyRegisterOtp(@RequestBody VerifyOtpRequest request) {
-
-    return authService.verifyRegisterOtp(
-            request.getEmail(),
-            request.getOtp()
-    );
-}
+    // VERIFY OTP REGISTER
+    @PostMapping("/register/verify")
+    public ApiResponse<UserResponse> verifyRegisterOtp(@RequestBody VerifyOtpRequest request) {
+        UserResponse response = authService.verifyRegisterOtp(
+                request.getEmail(),
+                request.getOtp()
+        );
+        return ApiResponse.success(response, "Xác thực thành công");
+    }
 
     // LOGIN → trả token
-@PostMapping("/login")
-public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-
-    LoginResponse response = authService.login(request);
-
-    return ResponseEntity.ok(response);
-}
+    @PostMapping("/login")
+    public ApiResponse<LoginResponse> login(@RequestBody LoginRequest request) {
+        LoginResponse response = authService.login(request);
+        return ApiResponse.success(response, "Đăng nhập thành công");
+    }
 
     // PROFILE → lấy từ token
     @GetMapping("/profile")
-    public UserResponse getProfile(Authentication authentication) {
-
+    public ApiResponse<UserResponse> getProfile(Authentication authentication) {
         String username = authentication.getName();
+        UserResponse response = authService.getUserByUsername(username);
+        return ApiResponse.success(response);
+    }
 
-        return authService.getUserByUsername(username);
-    }
-    // quên pass
+    // QUÊN PASS
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+    public ApiResponse<Void> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request.getEmail());
-        return ResponseEntity.ok("OTP đã được gửi");
+        return ApiResponse.success(null, "OTP đã được gửi");
     }
-    //nhap otp
+
+    // NHẬP OTP
     @PostMapping("/verify-otp")
-    public void verifyOtp(@RequestBody VerifyOtpRequest request) {
+    public ApiResponse<Void> verifyOtp(@RequestBody VerifyOtpRequest request) {
         authService.verifyOtp(request.getEmail(), request.getOtp());
+        return ApiResponse.success(null, "Xác thực OTP thành công");
     }
-    // reset pass
+
+    // RESET PASS
     @PostMapping("/reset-password")
-    public void resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ApiResponse<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
         authService.resetPassword(
             request.getEmail(),
             request.getNewPassword()
         );
+        return ApiResponse.success(null, "Cập nhật mật khẩu thành công");
     }
+
     @PostMapping("/change-password")
-public ResponseEntity<String> changePassword(
-        Authentication authentication,
-        @RequestBody ChangePasswordRequest request) {
-
-    String username = authentication.getName();
-    authService.changePassword(username, request);
-
-    return ResponseEntity.ok("Đổi mật khẩu thành công");
-}
+    public ApiResponse<Void> changePassword(
+            Authentication authentication,
+            @RequestBody ChangePasswordRequest request) {
+        String username = authentication.getName();
+        authService.changePassword(username, request);
+        return ApiResponse.success(null, "Đổi mật khẩu thành công");
+    }
 }
